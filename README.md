@@ -1,4 +1,5 @@
 # Alan Compiler
+The official documentation of the Alan language for the needs of the project can be found [here](alan2024.pdf).
 
 ### Dependencies 
 ```
