@@ -1,0 +1,46 @@
+christmas () : proc 
+    trees : int;
+    forest : int [20];
+    i : int;
+    b : byte;
+
+    count_trees (forest : reference int []) : int 
+    i : int;
+    cnt : int;
+    {
+        i = 0; 
+        cnt = 0;
+        while (i < trees) {
+            if (forest[i] == 1) {
+            cnt = cnt + 1;
+            writeString("Found a tree at index: \t");
+            writeInteger(i);
+            writeChar('\n');
+            }
+            i = i + 1;
+        }
+        -- return cnt; -- uncomment to silent error
+    }
+    { -- main
+        trees = 20;
+        i = 0;
+        while (i < 10) {
+        forest[i] = 0;
+        i = i + 1;
+        }
+        forest[i] = 1;
+        forest[i+1] = 1;
+        forest[i+2] = 1;
+        i = i+3;
+        while(i <= 20){
+            forest[i] = 0;
+            i = i + 1;
+        }
+        -- comment to silent error
+        result = 0;
+        -- comment to silent error and uncomment next line
+        b = count_trees(forest); 
+        b = shrink(count_trees(forest));
+        -- writeByte(b);
+        writeChar('a' + b);
+    }

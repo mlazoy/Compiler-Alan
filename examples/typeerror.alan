@@ -1,0 +1,11 @@
+main () : proc 
+    num1 : int;
+    num2 : byte;
+
+    {
+        num1 = 42;
+        num2 = 'a';
+        if (num1 + num2 > 50) writeByte(num2);
+        else writeByte(num1);
+    }
+

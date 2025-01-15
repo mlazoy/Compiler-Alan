@@ -1,0 +1,30 @@
+(* Checks strcmp, strlen, return type 'byte' *)
+
+hockey () : proc 
+    player1 : byte [32];
+    player2  : byte [32];
+    play (player1 : reference byte [], player2 : reference byte []) : byte 
+        swap : int;
+        {
+            if (strcmp(player1, player2) == 0) swap = 0;
+            else if (strlen(player1) < strlen(player2)) swap = 1;
+            else swap = 2;
+
+            if (swap == 0) return 'e';
+            else if (swap == 1) return 'w';
+            else return 'l';
+        }
+        result : byte;
+        {
+            writeString("Player 1 write your name: ");
+            readString(32, player1);
+            writeChar('\n');
+
+            writeString("Player 2 write your name: ");
+            readString(32, player2);
+            writeChar('\n');
+
+            result = play(player1, player2);
+            writeChar(result);
+            writeChar('\n');
+        }

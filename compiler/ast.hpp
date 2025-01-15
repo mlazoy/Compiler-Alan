@@ -916,18 +916,21 @@ public:
             body->sem(ret_t);
         }
 
+        std::ostringstream ret_err;
+        ret_err << ret_type;
+
         switch(ret_t) {
-            case UNDEF  : yyerror("Return value diverges between paths inside '%s'; ensure is compatible with '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+            case UNDEF  : yyerror("Return value diverges between paths inside '%s'; ensure is compatible with '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());
                          break;
             case RINT    : if (!(ret_type == AlanType(INT)) )
-                            yyerror("Return type 'int' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                            yyerror("Return type 'int' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());
                           break;
             case RBYTE   : if (!(ret_type == AlanType(BYTE)) )
-                            yyerror("Return type 'byte' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                            yyerror("Return type 'byte' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());
                           break;
             case RNULL   :
             case VOID   : if (!(ret_type == AlanType(PROC)) )
-                            yyerror("End of non-void function; '%s' must return a value of '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                            yyerror("End of non-void function; '%s' must return a value of '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());
                           break;
             default     : yyerror("Undefined return type\n", FATAL, -1);
         }

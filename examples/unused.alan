@@ -1,0 +1,10 @@
+hello () : proc 
+    firstname : byte [32];
+    lastname :  byte [32];
+    len : int ;
+    {
+        writeString("Enter your firstname: ");
+        readString(32, firstname);
+        if (strlen(firstname) > 10) writeString("Long Name\n");
+        else writeString("Short name\n");
+    }
