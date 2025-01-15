@@ -1,0 +1,22 @@
+main() : proc 
+
+    dynamic_array : int[32];
+    val : int;
+
+    init_array (num : int) : proc 
+        i : int;
+        {
+            i = 0;
+            while (i < 32) {
+                dynamic_array[i] = num;
+                writeInteger(dynamic_array[i]);
+                writeChar('\n');
+                i = i + 1;
+            }
+        }
+
+    { -- main
+        writeString("Please give an init value: ");
+        val = readInteger();
+        init_array(val);
+    } -- main

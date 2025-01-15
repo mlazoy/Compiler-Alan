@@ -1,0 +1,17 @@
+(* if | evaluates always both operands if-1 would raise floating point exception
+   if & evaluates always both operands if-3 would raise floating point exception *)
+
+main () : proc  
+i : int;
+j : int;
+{
+    i = 10;
+    j = 0;
+    if ( i == 10 | i/j == 1) writeString("Or Circuit Passed\n");
+    if ( i == 5 | i/j == 1) writeString("this point shouldn\'t be reached\n"); 
+    -- comment the previous line to check & 
+    if ( i == 5 & i/j == 1) writeString("this point shouldn\'t be reached\n");
+    writeString("And Circuit Passed\n");
+    if ( i == 10 & i/j ==1) writeString("this point shouldn\'t be reached\n");
+
+}

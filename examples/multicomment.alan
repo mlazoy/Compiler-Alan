@@ -1,0 +1,17 @@
+hello () : proc -- single line comment
+{ 
+    writeString("abc");
+    writeString("Route66");
+    writeString("Hello world!\n");
+    writeString("Name:\t\"DouglasAdams\"\nValue:\t42\n");
+    (* This
+    is 
+    a 
+    multiline 
+    (* nested
+    comment
+    *)
+    !
+    *)
+    @ -- illegal character
+}

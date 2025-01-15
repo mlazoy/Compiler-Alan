@@ -1,0 +1,11 @@
+main () : proc
+{
+    writeChar('a');
+    writeChar('1');
+    writeChar('\n');
+    writeChar('\'');
+    writeByte('\x1d');
+    writeString("I'm sorry\n");
+    writeString("Name:\t\"DouglasAdams\"\nValue:\t42\n");
+    writeInteger(42);
+}

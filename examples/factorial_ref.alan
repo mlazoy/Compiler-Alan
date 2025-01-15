@@ -1,0 +1,27 @@
+(*
+   This Alan program, besides testing recursive functions, shows the following:
+     1. There is no need for the top-most procedure to be named `main'.
+     2. One can have nested procedures with the same name as an outer one.
+     3. Static scoping rules apply to procedure calls as well.
+*)
+
+factorial () : proc
+   g_aux : int;
+   
+   factorial (n : int) : int
+   {
+      if (n == 0) {
+         g_aux = 1;
+         return g_aux;
+      }
+      else {
+         g_aux = n * factorial(n-1);
+         return g_aux;
+      }
+   }
+{
+  factorial(5);
+  writeString("The factorial of 5 is ");
+  writeInteger(g_aux);
+  writeString("\n");
+}
