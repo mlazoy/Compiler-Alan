@@ -1,0 +1,13 @@
+main () : proc 
+    ret1 : int;
+    ret2 : int;
+    
+    error(i : int, j : int) : int 
+    {
+        if (i == j) return 1;
+        else return;
+    }
+
+    {
+        error(ret1, ret2);
+    }
