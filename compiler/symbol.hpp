@@ -16,6 +16,8 @@ extern std::ofstream symbol_stream;
 
 enum BaseType {NONE, INT, BYTE, BOOL, ARRAY, PROC, FUNCTION, PARAMETER};
 
+enum RetType {UNDEF, VOID, RINT, RBYTE, RNULL};
+
 struct AlanType {
     BaseType base_type;
     AlanType *element_type;

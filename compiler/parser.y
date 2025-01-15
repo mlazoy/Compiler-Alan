@@ -25,7 +25,7 @@ bool DEBUG = 0;
 std::string ast_file, symbol_file;
 std::ofstream ast_stream, symbol_stream;
 
-AlanType ret_val;
+RetType ret_val;
 
 %}
 

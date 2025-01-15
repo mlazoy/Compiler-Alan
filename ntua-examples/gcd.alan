@@ -1,0 +1,30 @@
+gcd():proc
+	find_gcd(a:int, b:int):int
+	i:int;
+	{
+		if (a>b)
+			i=a;
+		else
+			i=b;
+
+		while (i>1)
+		{
+			if ((a%i==0) & (b%i==0))
+				return i;
+			i=i-1;
+		}
+		return 1;
+
+	}
+	
+	a:int;
+	b:int;
+	
+	{
+		writeString("Give me two positive integers: \n");
+		a = readInteger();
+		b = readInteger();
+		writeString("\nTheir GCD is: ");
+		writeInteger(find_gcd(a, b));
+		writeString("\n");
+	}

@@ -17,12 +17,21 @@ const char *exec_suffix = ".out";
 
 void printUsage(const char *program) {
     std::cerr << "Usage: " << program << " [-O] [-f] [-i] [-d] <source_file>\n"
-              << "  -O      Enable optimization\n"
-              << "  -f      Reads program from stdin; Outputs final code to stdout\n"
-              << "  -i      Reads program from stding; Outputs intermediate code to stdout\n"
-              << "  -d      Debug mode: creates ast.out, symbol.out\n"
+              << "  -O          Enables optimization\n"
+              << "  -f          Reads program from stdin; Outputs final code to stdout\n"
+              << "  -i          Reads program from stding; Outputs intermediate code to stdout\n"
+              << "  -d          Debug mode: Creates *.ast and *.symbol files in current directory\n"
+              << "  --version   \n"
+              << "  --opaque    Triggers llc --opaque-pointers flag if version <15\n"
+              << "  --pie       Disables clang -no-pie flag \n\n"
+              << "NOTE: When options [-f] [-i] are selected executable is saved into /tmp/temp.alan\n";
               ;
     exit(1);
+}
+
+void printVersion() {
+    std::cerr << "alanc : The Alan Compiler v1.0.0\n";
+    exit(0);
 }
 
 bool is_alan(const char *filename) {
@@ -48,27 +57,38 @@ void print_assembly(const std::string &filename) {
 }
 
 int main(int argc, char *argv[]) {
-    bool o_flag, f_flag, i_flag, d_flag;
+    bool o_flag, f_flag, i_flag, d_flag, opaq_flag, pie_flag;
     const char *sourcefile = nullptr;
     char *flag;
 
-    o_flag = f_flag = i_flag = d_flag = false;
+    o_flag = f_flag = i_flag = d_flag = opaq_flag = pie_flag = false;
 
-    if (argc <= 1 || argc > 6) {
+    if (argc <= 1 || argc > 8) {
         std:: cerr <<"Wrong number of arguements\n\n";
         printUsage(argv[0]);
     }
 
+    if (strcmp(argv[1],"--help") == 0) printUsage(argv[0]);
+    else if (strcmp(argv[1],"--version") == 0) printVersion();
+
     for (int i=1; i < argc; ++i){ 
         flag = argv[i];
-        if (strlen(flag) == 2 && flag[0] == '-'){
-            switch (flag[1]){
-                case 'O' : o_flag = true; break;
-                case 'f' : f_flag = true; break;
-                case 'i' : i_flag = true; break;
-                case 'd' : d_flag = true; break;
-                default  : std::cerr << "Unknown flag " << flag[1] << "\n\n"; 
-                           printUsage(argv[0]);
+        if (flag[0] == '-'){
+            if (strlen(flag) == 2) {
+                switch (flag[1]){
+                    case 'O' : o_flag = true; break;
+                    case 'f' : f_flag = true; break;
+                    case 'i' : i_flag = true; break;
+                    case 'd' : d_flag = true; break;
+                    default  : std::cerr << "Unknown flag " << flag << "\n\n"; 
+                            printUsage(argv[0]);
+                }
+            }
+            else if (strcmp(flag, "--pie") == 0) pie_flag = true;
+            else if (strcmp(flag, "--opaque") == 0) opaq_flag = true;
+            else {
+                std::cerr << "Unknown flag " << flag << "\n\n"; 
+                printUsage(argv[0]);
             }
         }
         //else printUsage(argv[0]);
@@ -121,13 +141,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     // llc -o a.asm a.imm
-    cmd = "llc -o " + asm_file + " " + imm_file;
+    if (opaq_flag) cmd = "llc --opaque-pointers -o ";
+    else cmd = "llc -o ";
+    cmd+= asm_file + " " + imm_file;
     if (std::system(cmd.c_str()) != 0) {
         std::cerr << "Failed to generate final code\n";
         return 1;
     }
     // clang++ -o a.out a.asm "$ALAN_PATH"/libalan.a -no-pie -stdlib=libc++
-    cmd = "clang++ -o " + exec_file + " " + asm_file + " " + lib_path + " -no-pie -stdlib=libc++";
+    cmd = "clang++ -o " + exec_file + " " + asm_file + " " + lib_path;
+    if(pie_flag) cmd += " -stdlib=libc++";
+    else cmd += " -no-pie -stdlib=libc++";
     if (std::system(cmd.c_str()) != 0) {
         std::cerr << "Failed to generate the executable\n";
         return 1;

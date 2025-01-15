@@ -37,7 +37,7 @@ class AST {
 public: 
     AST() : num_line(yylineno) {}
     virtual ~AST() {}
-    virtual void sem(AlanType &ret_t) {}
+    virtual void sem(RetType &ret_t) {}
     virtual Value* compile() = 0;
     virtual void llvm_cgen(bool opt);
     virtual void PrintTree(std::ostream &out) const = 0;
@@ -139,7 +139,7 @@ public:
 
     void append(Expr *e) { expr_list.push_back(e);}
 
-    virtual void sem (AlanType &ret_t) override {
+    virtual void sem (RetType &ret_t) override {
         for (Expr *e: expr_list) e->sem(ret_t);    
     }
 
@@ -167,7 +167,7 @@ public:
     Variable() {} //default 
     Variable(std::string s, AlanType t): id(s), var_type(t) {}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         st.insert(id, var_type);
     }
 
@@ -193,7 +193,7 @@ class Array: public Variable {
 public:  
     Array(std::string s, AlanType item_t, int l): Variable(s, AlanType(ARRAY, new AlanType(item_t))), len(l) {}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         if (!(var_type.element_type && 
         (*var_type.element_type == AlanType(INT) || *var_type.element_type == AlanType(BYTE))))
             yyerror("Unsupported type of array items. Must be either 'int' or 'byte'", FATAL, num_line);
@@ -229,8 +229,9 @@ public:
     Parameter() {} //default
     Parameter(char *n, bool is_ref, AlanType t): id(n), reference(is_ref), param_type(t) {}
 
-        virtual void sem(AlanType &ret_t) override {}
-        virtual Value *compile() override {}
+        // they are not used
+        virtual void sem(RetType &ret_t) override {}
+        virtual Value *compile() override {  return nullptr; }
 
         void sem(SymbolEntry *parent_func) {
         FunctionData *func_data = (FunctionData *)(parent_func->get_priv());
@@ -278,7 +279,7 @@ public:
     void append(Variable *p) {var_list.push_back(p);}
 
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         for (Variable *v: var_list) v->sem(ret_t);
     }
 
@@ -308,7 +309,7 @@ public:
 
     void set_func_id(std::string f) {func_id = f;}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         SymbolEntry *E = st.lookup(func_id);
         if (E == nullptr || E->get_type().base_type != FUNCTION) 
             yyerror ("Undeclared function '%s' inside this scope.\n", FATAL, num_line,  func_id.c_str());
@@ -356,7 +357,7 @@ class IntConst: public Expr {
 public:  
     IntConst(int n): value(n) {}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
          type = AlanType(INT);
     }
 
@@ -376,7 +377,7 @@ class ByteConst: public Expr {
 public:  
     ByteConst(uint8_t c): ascii_val(c) {}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         type = AlanType(BYTE);
     }
 
@@ -405,7 +406,7 @@ class Id: public LVal{
 public: 
     Id(char *i) : id(i) {}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         SymbolEntry *E = st.lookup(id);
         if (E != nullptr) 
             type = E->get_type();
@@ -458,7 +459,7 @@ public:
         val.pop_back(); // removes '"'
     } 
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         type = AlanType(ARRAY, new AlanType(BYTE));
     }
 
@@ -497,7 +498,7 @@ public:
     ArrayItem(char *a, Expr* i): array_id(a), index(i) {}
     ~ArrayItem() {delete index;}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         SymbolEntry *E = st.lookup(array_id);
         
         if (E == nullptr) 
@@ -545,7 +546,7 @@ class BoolConst: public Cond {
 public:
     BoolConst(bool b): flag(b) {}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         type = AlanType(BOOL);
     }
 
@@ -569,7 +570,7 @@ public:
         delete expr;
     }
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         expr->sem(ret_t);
         if(expr->type_check(AlanType(PROC), true))
             yyerror("RHS is of type 'proc' and can't be assigned to any variable.\n", FATAL, num_line);
@@ -607,17 +608,25 @@ public:
 
     void set_in_func(std::string func_name) { in_func = func_name; }
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
 
         if (ret){
             ret->sem(ret_t);
             type = ret->get_type();
+            if (ret->type_check(AlanType(INT), true))
+                ret_t = RINT;
+            else if (ret->type_check(AlanType(BYTE), true)) 
+                ret_t = RBYTE;
+            else {
+                yyerror("Invalid return statement; must be either 'int' or 'byte'.\n", FATAL, num_line);
+                ret_t = UNDEF;
+            }
         }
 
-        else 
+        else {
             type = AlanType(PROC);
-
-        ret_t = type;
+            ret_t = VOID;
+        }
     }
 
     virtual Value* compile() override {
@@ -651,7 +660,7 @@ public:
         delete stmt;
     }
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         cond->sem(ret_t);
         if (!cond->type_check(AlanType(BOOL)))
             yyerror("Invalid type expression in While condition; must be of type 'bool'.\n", FATAL, num_line);
@@ -710,21 +719,21 @@ public:
         delete stmt_else;
     }
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         cond->sem(ret_t);
         if(!cond->type_check(AlanType(BOOL)))
             yyerror("Invalid type expression in If condition; must be of type 'bool'.\n", FATAL, num_line);
 
-        AlanType then_ret_t, else_ret_t; 
-        then_ret_t = else_ret_t = AlanType(NONE);
+        RetType then_ret_t, else_ret_t; 
+        then_ret_t = else_ret_t = RNULL;
 
         stmt_then->sem(then_ret_t);
-        if (then_ret_t != AlanType(NONE)) 
+        if (then_ret_t != RNULL) 
             ret_then = true;
 
         if (stmt_else) {
             stmt_else->sem(else_ret_t);
-            if (else_ret_t != AlanType(NONE)) 
+            if (else_ret_t != RNULL) 
                 ret_else = true;
         }
 
@@ -735,19 +744,24 @@ public:
             if (then_ret_t == else_ret_t) {
                 ret_t = then_ret_t;
             }
-            else if ((then_ret_t == AlanType(NONE) && else_ret_t == AlanType(PROC)) ||
-                (else_ret_t == AlanType(NONE) && then_ret_t == AlanType(PROC)) ) {
-                    ret_t = AlanType(NONE);
-                    yyerror("Return is not explicitly declared in all paths\n", WARNING, num_line);
-                }
+            else if (then_ret_t == RNULL) {
+                ret_t = else_ret_t;
+                yyerror("Return is not explicitly declared in all paths\n", WARNING, num_line);
+            } 
+            else if (else_ret_t == RNULL) {
+                ret_t = then_ret_t;
+                yyerror("Return is not explicitly declared in all paths\n", WARNING, num_line);
+            }
+
             else {
-                ret_t = AlanType(NONE);
+                ret_t = UNDEF;
                 yyerror("Return value must be the same for all branches.\n", FATAL, num_line);
                 exit(1);
             }
         }
     
     }
+
 
     virtual Value* compile () override {
         Value *cond_val = cond->compile();
@@ -779,7 +793,8 @@ public:
         if (!ret_else) 
             Builder.CreateBr(EndIF); 
         
-
+        if(!Builder.GetInsertBlock()->getTerminator() && EndIF)
+            Builder.CreateBr(EndIF);
         if (!(ret_then && ret_else))  { 
             TheFunction->insert(TheFunction->end(), EndIF);                         
             Builder.SetInsertPoint(EndIF);
@@ -810,7 +825,7 @@ public:
 
     void append(Stmt *s) { stmt_list.push_back(s);}
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         for (Stmt *s: stmt_list) s->sem(ret_t);
         //if (dynamic_cast<Return *>(s)) ((Return *)s)->set_in_func(in_func);
     }
@@ -864,7 +879,7 @@ public:
 
     void append_local_def(Definition *def);
 
-    virtual void sem(AlanType &ret_t) override;
+    virtual void sem(RetType &ret_t) override;
     virtual Value* compile() override; 
 
     void PrintTree(std::ostream &out) const override ; 
@@ -888,8 +903,8 @@ public:
 
     void append_param(Parameter *p) {params->append(p);}
 
-    virtual void sem(AlanType &ret_t) override {
-        ret_t = AlanType(NONE); // start with none and check final value
+    virtual void sem(RetType &ret_t) override {
+        ret_t = RNULL; // start with none and check final value
         FunctionData *func_priv = new FunctionData(ret_type);
         SymbolEntry *new_e = st.insert(id, AlanType(FUNCTION), func_priv);
         st.OpenScope(id);
@@ -901,22 +916,23 @@ public:
             body->sem(ret_t);
         }
 
-        if (ret_t == AlanType(NONE)){
-            if (ret_type != AlanType(PROC))
-                 yyerror ("End of non-void function. Check all return paths.\n", FATAL, num_line);
-            // else 
-            //     yyerror("Some paths don't explicitly 'return' in function '%s'; Beware for infitie loops.\n", WARNING, num_line, id.c_str());
-        } 
-           
-        else if (ret_t != ret_type) {
-                std::ostringstream actual_t;
-                std::ostringstream provided_t;
-                actual_t << ret_type;
-                provided_t << ret_t;
-                yyerror("Return value of type '%s' doesn't comply with function's '%s' definition '%s'.\n", 
-                FATAL, num_line, provided_t.str().c_str(), id.c_str(), actual_t.str().c_str());
+        switch(ret_t) {
+            case UNDEF  : yyerror("Return value diverges between paths inside '%s'; ensure is compatible with '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                         break;
+            case RINT    : if (!(ret_type == AlanType(INT)) )
+                            yyerror("Return type 'int' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                          break;
+            case RBYTE   : if (!(ret_type == AlanType(BYTE)) )
+                            yyerror("Return type 'byte' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                          break;
+            case RNULL   :
+            case VOID   : if (!(ret_type == AlanType(PROC)) )
+                            yyerror("End of non-void function; '%s' must return a value of '%s'\n", FATAL, num_line, id.c_str(), ret_type);
+                          break;
+            default     : yyerror("Undefined return type\n", FATAL, -1);
         }
-        ret_t = AlanType(NONE);
+    
+        ret_t = RNULL;   // nested function should not affect parent
 
         // get closure
         for (auto &g: func_priv->get_closure()) {
@@ -1069,7 +1085,7 @@ inline void LocalDefList::PrintTree(std::ostream &out) const {
         }
     }
 
-inline void LocalDefList::sem(AlanType &ret_t) {
+inline void LocalDefList::sem(RetType &ret_t) {
     for (Variable *v: locals.var_defs) v->sem(ret_t);
     for (FunctionDecl *fd: locals.func_defs) fd->sem(ret_t);
 }
@@ -1087,7 +1103,7 @@ public:
         delete args;
     }
         
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         SymbolEntry *E = st.lookup(id);
         if (E == nullptr) 
             yyerror("Undeclared function '%s' inside this scope.\n", FATAL, num_line, id.c_str());
@@ -1186,7 +1202,7 @@ public:
         delete right_op;
     }
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         AlanType temp_l, temp_r;
         left_op->sem(ret_t);
         switch(op){
@@ -1337,7 +1353,7 @@ public:
         delete expr;
     }
 
-    virtual void sem(AlanType &ret_t) override {
+    virtual void sem(RetType &ret_t) override {
         expr->sem(ret_t);
         switch(op){
             case '+': case '-': 
