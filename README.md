@@ -1,4 +1,10 @@
 # Alan Compiler
+![Lines of Code](https://img.shields.io/tokei/lines/github/mlazoy/Compiler-Alan)
+![Languages](https://img.shields.io/github/languages/count/mlazoy/Compiler-Alan)
+![Top Language](https://img.shields.io/github/languages/top/mlazoy/Compiler-Alan)
+![Repo Size](https://img.shields.io/badge/repo--size-123KB-blue)
+
+
 The official documentation of the Alan language for the needs of the project can be found [here](alan2024.pdf).
 
 ### Dependencies 
