@@ -24,6 +24,11 @@ The source code of the compiler was written based on llvm@19.1.3 and the updated
 
 ### Building the Alan Compiler
 
+Download the repo and navigate to the root dorectory:
+```
+git clone https://github.com/mlazoy/Compiler-Alan.git
+cd Compiler-Alan
+```
 Navigate to the 'compiler' directory and build:
 ```
 cd compiler && make distclean; make
@@ -57,7 +62,7 @@ You can try out some example programs included in the examples directory. Feel f
 
 ./alanc -O -d ../examples/factorial_ref.alan
 ../examples/factorial_ref.out
-cat factorial_ref.alan.symbol
+cat factorial_ref.symbol
 ```
 
 Enjoy using the Alan compiler! 🎉
