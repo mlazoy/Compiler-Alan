@@ -94,33 +94,37 @@ int main(int argc, char *argv[]) {
         //else printUsage(argv[0]);
     }
 
-    if ( !f_flag && !i_flag ) {
+    //if ( !f_flag && !i_flag ) {
         sourcefile = argv[argc-1]; // Last parameter is the source file
         if (!is_alan(sourcefile)) {
             std::cerr << "Invalid input file; provide an '.alan' one\n\n";
             printUsage(argv[0]);
         }
-    } 
-    else {
-        sourcefile = "/tmp/temp.alan"; // Temporary file to store stdin content
-        std::ofstream temp_file(sourcefile);
-        if (!temp_file) {
-            std::cerr << "Error: Could not create temporary file\n";
-            return 1;
-        }
-        std::string line;
-        while (std::getline(std::cin, line)) {
-            temp_file << line << "\n";
-        }
-        temp_file.close();
-    }
+    //} 
+    // READS FROM STDIN ??
+    // else {
+    //     sourcefile = "/tmp/temp.alan"; // Temporary file to store stdin content
+    //     std::ofstream temp_file(sourcefile);
+    //     if (!temp_file) {
+    //         std::cerr << "Error: Could not create temporary file\n";
+    //         return 1;
+    //     }
+    //     std::string line;
+    //     while (std::getline(std::cin, line)) {
+    //         temp_file << line << "\n";
+    //     }
+    //     temp_file.close();
+    // }
 
     // Derive intermediate, assembly and executable file names
     std::string base_name, file_name, imm_file, asm_file, exec_file;
 
     std::filesystem::path source_path(sourcefile);
     file_name = source_path.filename().string();    //removes full path
-    size_t last_dot = std::string(sourcefile).rfind('.');
+    size_t last_dot = file_name.rfind('.');
+    file_name = file_name.substr(0, last_dot);
+    
+    last_dot = std::string(sourcefile).rfind('.');
     base_name = std::string(sourcefile).substr(0, last_dot);
     imm_file = base_name + imm_suffix;
     asm_file = base_name + asm_suffix;

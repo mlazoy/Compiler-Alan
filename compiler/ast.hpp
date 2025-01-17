@@ -756,7 +756,7 @@ public:
             else {
                 ret_t = UNDEF;
                 yyerror("Return value must be the same for all branches.\n", FATAL, num_line);
-                exit(1);
+                // exit(1);
             }
         }
     
@@ -920,7 +920,7 @@ public:
         ret_err << ret_type;
 
         switch(ret_t) {
-            case UNDEF  : yyerror("Return value diverges between paths inside '%s'; ensure is compatible with '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());
+            case UNDEF  : yyerror("Return value diverses in paths inside '%s'; must be '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());
                          break;
             case RINT    : if (!(ret_type == AlanType(INT)) )
                             yyerror("Return type 'int' does not match with function's '%s' return value '%s'\n", FATAL, num_line, id.c_str(), ret_err.str().c_str());

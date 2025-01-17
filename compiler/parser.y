@@ -20,6 +20,7 @@ RecordTable rt;
 int __errno = 0;
 
 const char *src;
+const char *inp;
 bool OPT = 0;
 bool DEBUG = 0;
 std::string ast_file, symbol_file;
@@ -127,11 +128,11 @@ program:
     func_def {
         //std::cerr << "AST: " << *$1 << std::endl;
         if (DEBUG) {
-            ast_file = std::string(src) + ".ast";
-            symbol_file = std::string(src) + ".symbol";
+        /*  ast_file = std::string(inp) + ".ast";
+            symbol_file = std::string(inp) + ".symbol";
 
             symbol_stream.open(symbol_file, std::ios::app);
-            ast_stream.open(ast_file, std::ios::app);
+            ast_stream.open(ast_file, std::ios::app); */
 
             if (! ast_stream.is_open()) 
                 std::cerr <<"Error: Could not open " << ast_file << " for writing AST\n";
@@ -275,13 +276,24 @@ cond:
 int main(int argc, char *argv[]) {
     int result = 0;
     // first parameter is sourcefile
-    src = argv[1];
+    inp = argv[1];
+    src = (std::string(inp) + ".alan").c_str();
     // Check for flags
     for (int i = 2; i < argc; ++i) {
         if (strcmp(argv[i], "-O") == 0)
             OPT = true; 
-        if (strcmp(argv[i], "-d") == 0)
+        if (strcmp(argv[i], "-d") == 0) {
             DEBUG = true;
+            ast_file = std::string(inp) + ".ast";
+            symbol_file = std::string(inp) + ".symbol";
+
+            //truncate them if needed first
+            std::ofstream(ast_file, std::ios::out).close();
+            std::ofstream(symbol_file, std::ios::out).close();
+
+            symbol_stream.open(symbol_file, std::ios::app);
+            ast_stream.open(ast_file, std::ios::app);
+        }
     }
     result = yyparse();
     if (__errno != 0) {
