@@ -52,7 +52,7 @@ E \\([\"\\n\'tr0])
 
 \'([^\"\\\n\']|{E})\'|\'\\x{H}{H}?\'     {yylval.byte = getAscii(yytext); return T_char; }
 
-\"([^\"\\\n]|\\[\"\\ntr0])*\"            {  yylval.name = strdup(yytext);
+\"([^\"\\\n]|\\[ntr0\\'\"x{H}{H}?])*\"   {  yylval.name = strdup(yytext);
                                             return T_string;
                                         }
 

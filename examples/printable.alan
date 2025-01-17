@@ -8,4 +8,5 @@ main () : proc
     writeString("I'm sorry\n");
     writeString("Name:\t\"DouglasAdams\"\nValue:\t42\n");
     writeInteger(42);
+    writeString(" in hex is 0x\x32\x41\n");
 }

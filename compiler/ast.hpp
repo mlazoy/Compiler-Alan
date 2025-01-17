@@ -448,6 +448,12 @@ public:
                     case '\\' : ascii_val = uint8_t('\\'); break;
                     case '\'' : ascii_val = uint8_t('\''); break;
                     case '\"' : ascii_val = uint8_t('\"'); break;
+                    case 'x'  :  {
+                                 char *end_ptr;
+                                 ascii_val = static_cast<int>(std::strtol(str, &end_ptr, 16));
+                                 str = end_ptr; 
+                                 break;
+                                }
                     default   : ascii_val = uint8_t('\\'); str--; // normal charachter shouldn't be skipped
                 }
             }
