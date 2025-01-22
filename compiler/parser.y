@@ -74,8 +74,8 @@ RetType ret_val;
 /*priorities*/
 
 %left<op> '!'
-%left<op> '*' '/' '%'
 %left<op> '+' '-'
+%left<op> '*' '/' '%'
 %nonassoc<op> "==" "!=" '<' '>' "<=" ">="
 %left<op> '&'
 %left<op> '|'
