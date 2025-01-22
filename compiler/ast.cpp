@@ -2,11 +2,6 @@
 
 #include <set>
 
-const std::set<std::string> lib_funcs{"writeInteger", "writeByte", "writeChar", "writeString",
-                                   "readInteger", "readByte", "readChar", "readString",
-                                   "extend", "shrink",
-                                   "strlen", "strcmp", "strcpy", "strcat"};
-
 LLVMContext AST::TheContext;
 IRBuilder<> AST::Builder(TheContext);
 std::unique_ptr<Module> AST::TheModule;
@@ -178,8 +173,14 @@ Function *AST::TheStrCat;
         }
     }
 
-    bool AST::is_lib (std::string fun) const {
-        return (!(lib_funcs.find(fun) == lib_funcs.end()));
+
+void StmtBlock::sem(RetType &ret_t) {
+        for (Stmt *s: stmt_list) {
+            s->sem(ret_t);
+            FunctionCall *sf = dynamic_cast<FunctionCall *>(s);
+            if (sf!= nullptr && sf->get_type()!= AlanType(PROC))
+                yyerror("Return value of non-void funtion '%s' is not used.\n", WARNING, num_line, sf->get_id().c_str());
+        }
     }
 
 

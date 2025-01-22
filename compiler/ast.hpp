@@ -140,7 +140,7 @@ public:
     void append(Expr *e) { expr_list.push_back(e);}
 
     virtual void sem (RetType &ret_t) override {
-        for (Expr *e: expr_list) e->sem(ret_t);    
+        for (Expr *e: expr_list) e->sem(ret_t);
     }
 
     virtual Value* compile() override {
@@ -238,6 +238,8 @@ public:
         int idx = func_data->append_arg_t(param_type, reference);
         PrivateData *p = new ParamData(reference, idx, parent_func);
         st.insert(id, AlanType(PARAMETER), p);
+        if (param_type.base_type == ARRAY && (!reference))
+            yyerror("Invalid parameter type at position %d; Arrays must be passed by reference.\n", FATAL, num_line, idx);
         //std::cerr << "Inserted param " << id << " with type " << param_type << "\n";
         }
 
@@ -397,6 +399,7 @@ class LVal: public Expr {
 public: 
     AlanType get_type() { return type; }
     void set_handside(bool left) { lhandside = left; }
+    bool get_handside() { return lhandside; }
 
 protected:
     bool lhandside;
@@ -578,10 +581,19 @@ public:
 
     virtual void sem(RetType &ret_t) override {
         expr->sem(ret_t);
-        if(expr->type_check(AlanType(PROC), true))
-            yyerror("RHS is of type 'proc' and can't be assigned to any variable.\n", FATAL, num_line);
-        
+        if(expr->type_check(AlanType(PROC), true)) {
+            yyerror("Invalid assignment. Right operand is of type 'proc'.\n", FATAL, num_line);
+            return;
+        }
         lv->sem(ret_t);
+        if (lv->get_type() == AlanType(FUNCTION)){
+            yyerror("Invalid assignment. LVal cannot be a function.\n", FATAL, num_line);
+            return;
+        }
+        if (lv->get_type().base_type == ARRAY){
+            yyerror("Invalid assignment. LVal cannot be an 'array'.\n", FATAL, num_line);
+            return;
+        }
         if(!expr->type_check(lv->get_type())) 
             yyerror("Invalid assignment. Both sides must be of the same type.\n", FATAL, num_line);
 
@@ -831,10 +843,7 @@ public:
 
     void append(Stmt *s) { stmt_list.push_back(s);}
 
-    virtual void sem(RetType &ret_t) override {
-        for (Stmt *s: stmt_list) s->sem(ret_t);
-        //if (dynamic_cast<Return *>(s)) ((Return *)s)->set_in_func(in_func);
-    }
+    virtual void sem(RetType &ret_t) override;
 
     virtual Value* compile() override {
         for (Stmt *s: stmt_list) s->compile();
@@ -1111,6 +1120,8 @@ public:
     ~FunctionCall(){
         delete args;
     }
+
+    std::string get_id() { return id; }
         
     virtual void sem(RetType &ret_t) override {
         SymbolEntry *E = st.lookup(id);
@@ -1133,10 +1144,16 @@ public:
         if (args) {
             int i = 0;
             for (Expr *a: args->expr_list){
+                AlanType p = func_data->get_param_type(i);
+                bool ref = func_data->get_reference(i);
                 a->sem(ret_t);
-                AlanType p = func_data->get_param_type(i++);
+                if (ref && p.base_type != ARRAY && dynamic_cast<LVal *>(a) == nullptr)
+                     yyerror("Calling '%s' with imcompatible arguement type at position %d; must be a 'reference'.\n", FATAL, num_line, id.c_str(), i);
+
                 if(!a->type_check(p))
-                    yyerror("Calling '%s' with imcompatible arguement type at position %d.\n", FATAL, num_line, id.c_str(), i-1);
+                    yyerror("Calling '%s' with imcompatible arguement type at position %d.\n", FATAL, num_line, id.c_str(), i);
+                
+                i++;
             }
         }
         // push closure arguements
