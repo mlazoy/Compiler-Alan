@@ -5,10 +5,17 @@
 #include <filesystem>
 #include <string>
 #include <cstring>
+#include <unistd.h>
 
+// const char *cc_path = "../compiler/alan";
+// const char *lib_path = "../compiler/libalan.a";
+std::string cc_path;
+std::string lib_path;
 
-const char *cc_path = "../compiler/alan";
-const char *lib_path = "../compiler/libalan.a";
+std::string resolvePath(const char *execPath, std::string relativePath) {
+    std::filesystem::path execDir = std::filesystem::absolute(execPath).parent_path();
+    return (execDir / relativePath).string();
+}
 
 const char *alan_suffix = ".alan";
 const char *imm_suffix = ".imm";
@@ -57,6 +64,8 @@ void print_assembly(const std::string &filename) {
 }
 
 int main(int argc, char *argv[]) {
+    cc_path = resolvePath(argv[0], "../compiler/alan");
+    lib_path = resolvePath(argv[0], "../compiler/libalan.a");
     bool o_flag, f_flag, i_flag, d_flag, opaq_flag, pie_flag;
     const char *sourcefile = nullptr;
     char *flag;
