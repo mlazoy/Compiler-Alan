@@ -168,7 +168,9 @@ public:
     Variable(std::string s, AlanType t): id(s), var_type(t) {}
 
     virtual void sem(RetType &ret_t) override {
-        st.insert(id, var_type);
+        SymbolEntry *new_e = st.insert(id, var_type);
+        if (new_e == nullptr) 
+            yyerror("Redefinition of variable '%s'; already exists in this scope.\n", FATAL, num_line, id.c_str());
     }
 
     virtual Value* compile() override {
@@ -922,6 +924,10 @@ public:
         ret_t = RNULL; // start with none and check final value
         FunctionData *func_priv = new FunctionData(ret_type);
         SymbolEntry *new_e = st.insert(id, AlanType(FUNCTION), func_priv);
+        if (new_e == nullptr) {
+            yyerror ("Redefinition of function '%s'; already exists in this scope.\n", FATAL , num_line, id.c_str());
+            return;
+        }
         st.OpenScope(id);
 
         if(params) params->sem(ret_t);

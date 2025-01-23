@@ -201,8 +201,8 @@ public:
     SymbolEntry* insert(std::string s, AlanType t, PrivateData *p = nullptr) {
         //check if variable is already declared
         if(locals.find(s) != locals.end()) {
-            yyerror("Redefinition error: '%s' already exists in this scope\n", FATAL, -1, &s);
-            return nullptr;
+            //yyerror("Redefinition error: '%s' already exists in this scope\n", FATAL, -1, s.c_str());
+            return nullptr; // trigger error from caller in ast.hpp
         }
 
         locals[s] = SymbolEntry(t,p);
